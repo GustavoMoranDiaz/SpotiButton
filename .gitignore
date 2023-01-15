@@ -1,3 +1,6 @@
-pyspotibutton/env
 .vscode
+pyspotibutton/env
+pyspotibutton/.env
 .cache
+pyspotibutton/dist
+pyspotibutton/build

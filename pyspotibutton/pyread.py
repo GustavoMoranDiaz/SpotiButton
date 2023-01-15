@@ -1,9 +1,12 @@
 import serial
-import os
-import time
 from pprint import pprint
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from dotenv import load_dotenv
+import os
+import time
+
+load_dotenv()
 
 serial_port = "/dev/ttyUSB0"
 
@@ -26,6 +29,7 @@ spotify_query = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, c
 arduino = serial.Serial(serial_port, 9600, timeout=1)
 
 while True: #looping starting hear
+    time.sleep(1)
     serialData = ' '
     serialValue = ' '
     bytesWaiting = arduino.in_waiting # updates the num of bytes waiting in buffer
@@ -36,37 +40,19 @@ while True: #looping starting hear
             currentTrack = spotify_query.current_user_playing_track() #current track now contains all info about current spotify usage
             if currentTrack == None: #if there is not a current track
                 arduino.write(str.encode('N')) #signal to arduino that there is no track playing
+                print("Spotify is closed or this is no track playing\n")
             else:
                 isPlaying = currentTrack['is_playing']
                 if isPlaying == False: #if paused
                     arduino.write(str.encode('N')) #signal to arduino that track is paused
+                    print("Spotify is paused \n")
                 else:
                     isPlayingID = [currentTrack['item']['id']]
                     isSaved = spotify_query.current_user_saved_tracks_contains(tracks=isPlayingID)
                     if isSaved == [False]:
                         arduino.write(str.encode('W')) # song is not saved, so it Will be saved
                         spotify_query.current_user_saved_tracks_add(tracks=isPlayingID)
+                        print("Song added to Saved Songs\n")
                     else:
                         arduino.write(str.encode('A'))
-
-
-
-            
-
-
-# currentTrack = spotify_query.current_user_playing_track() #is playing will contain None if nothing is playing, and a JSON file if they are
-# if currentTrack == None: #if there is a current track
-#     arduino.write(str.encode("0"))
-#     print(arduino.readline().decode('ascii'))
-#     #print("Nothing is Playing")
-# else:
-#     isPlayingid = [currentTrack['item']['id']] #tracks parameter needs to be a list hence the use of []
-#     isSaved = spotify_query.current_user_saved_tracks_contains(tracks=isPlayingid)
-#     if isSaved == [False]:
-#         arduino.write(str.encode("2"))
-#         print(arduino.readline().decode('ascii'))
-#         #print("you dont have this song liked")
-#     else:
-#         arduino.write(str.encode("1"))
-#         print(arduino.readline().decode('ascii'))
-#         #print("you do have this song liked")
+                        print("Song is already saved\n")
